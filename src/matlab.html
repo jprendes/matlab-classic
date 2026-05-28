@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <title>Rust WebAssembly example</title>
+        <script src="https://cdn.jsdelivr.net/npm/xterm@5.0.0/lib/xterm.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/xterm-pty@0.9.4/index.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/xterm-addon-webgl@0.13.0/lib/xterm-addon-webgl.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.0.0/css/xterm.css">
+        <style>
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: max-content;
+                min-height: max-content;
+                margin: 0;
+                padding: 8px;
+                background: #666;
+            }
+            #terminal {
+                background: black;
+                padding: 8px;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgb(0 0 0 / 50%);
+            }
+
+            /* width */
+            #terminal ::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            /* Track */
+            #terminal ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            /* Handle */
+            #terminal ::-webkit-scrollbar-thumb {
+                background: #888;
+            }
+
+            /* Handle on hover */
+            #terminal ::-webkit-scrollbar-thumb:hover {
+                background: #BBB;
+            }
+
+            #terminal {
+                scrollbar-width: thin;          /* "auto" or "thin" */
+                scrollbar-color: #888 transparent;   /* scroll thumb and track */ 
+            }
+        </style>
+    </head>
+    <body>
+        <div id="terminal"></div>
+        <script type="module">
+            import MATLAB from "./client.mjs";
+            MATLAB.fromElement(document.getElementById('terminal'));
+        </script>
+    </body>
+</html>
