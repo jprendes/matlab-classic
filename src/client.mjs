@@ -1,3 +1,8 @@
+import { Terminal } from "xterm";
+import { openpty } from "xterm-pty";
+import { WebglAddon } from "xterm-addon-webgl";
+import "xterm/css/xterm.css";
+
 import IoClient from "./IoClient.mjs";
 
 class Client extends IoClient {
@@ -17,7 +22,7 @@ class Client extends IoClient {
         const { master, slave } = openpty();
         term.loadAddon(master);
 
-        const addon = new WebglAddon.WebglAddon();
+        const addon = new WebglAddon();
         addon.onContextLoss(e => addon.dispose());
         term.loadAddon(addon);
 

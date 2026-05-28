@@ -1,6 +1,6 @@
 import { readSync } from "node:fs";
 
-import MATLAB from "./build/matlab.mjs";
+import MATLAB from "./src/matlab.mjs";
 
 const buf = Buffer.alloc(4096);
 

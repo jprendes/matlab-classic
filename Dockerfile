@@ -101,8 +101,18 @@ RUN emcc /opt/readline/*.c \
         -sWASMFS \
         -o /opt/readline/build/readline.wasm
 
+# Build the frontend with Vite
+FROM node:22-slim AS vite-builder
+
+WORKDIR /app
+
+COPY package.json index.html vite.config.js /app/
+COPY src /app/src
+COPY --from=classic-builder /opt/classic/build/classic.wasm /app/src/classic.wasm
+
+RUN npm install
+RUN npx vite build
+
 # Build the final image
 FROM scratch AS final
-COPY --from=classic-builder /opt/classic/build/* /
-COPY ./src/*.mjs /
-COPY ./src/*.html /
+COPY --from=vite-builder /app/build /
