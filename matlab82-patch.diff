@@ -1,0 +1,46 @@
+diff --git a/SRC/GETLIN.f b/SRC/GETLIN.f
+index 50c14d8..5dd0a41 100644
+--- a/SRC/GETLIN.f
++++ b/SRC/GETLIN.f
+@@ -61,7 +61,7 @@ C
+       CALL PUTID(LIN(L),RETU)
+       L = L + 4
+       GO TO 45
+-   52 CALL FILES(-RTE,BUF)
++   52 STOP
+       LIN(L) = EOL
+       RETURN
+ C
+diff --git a/SRC/MATLAB.f b/SRC/MATLAB.f
+index f835d41..7855cf9 100644
+--- a/SRC/MATLAB.f
++++ b/SRC/MATLAB.f
+@@ -56,13 +56,11 @@ C
+       IF (INIT .GT. 0) GO TO 90
+ C
+ C     RTE = UNIT NUMBER FOR TERMINAL INPUT
+-      RTE = 0
+-      CALL FILES(RTE,BUF)
++      RTE = 5
+       RIO = RTE
+ C
+ C     WTE = UNIT NUMBER FOR TERMINAL OUTPUT
+-      WTE = 0
+-      CALL FILES(WTE,BUF)
++      WTE = 6
+       WIO = 0
+ C
+       IF (INIT .GE. 0) WRITE(WTE,100)
+diff --git a/SRC/SYS.f b/SRC/SYS.f
+index 4999a33..a85effb 100644
+--- a/SRC/SYS.f
++++ b/SRC/SYS.f
+@@ -175,7 +175,7 @@ C
+       COMMON /IOP/ DDT,ERR,FMT,LCT,LIN,LPT,HIO,RIO,WIO,RTE,WTE
+       WRITE(WTE,10)
+       IF (WIO .NE. 0) WRITE(WIO,10)
+-   10 FORMAT(/1X,'<>',$)
++   10 FORMAT(/1X,'<>')
+       IF (PAUSE .EQ. 1) READ(RTE,20) DUMMY
+    20 FORMAT(A1)
+       RETURN

@@ -24,82 +24,65 @@ RUN sed -i -E 's/^(CC|CFLAGS) =/\1 ?=/' /opt/f2c/build/libf2c/makefile.u \
     && echo '#define IEEE_8087' > /opt/f2c/build/libf2c/arith.h
 
 RUN emmake make -C /opt/f2c/build/libf2c -f makefile.u \
-        CFLAGS="-Wno-parentheses -Wno-shift-op-parentheses -Wno-format-security -flto -Oz" \
+        CFLAGS="-Wno-parentheses -Wno-shift-op-parentheses -Wno-format-security -Oz -flto" \
         all
 
-# Convert Classic Fortran sources to C
-FROM base AS classic-converter
+FROM base AS development
 
 COPY --from=f2c-builder /opt/f2c/build/src/f2c /usr/local/bin/f2c
-
-COPY ./Classic /opt/classic/orig
-
-RUN mkdir -p /opt/classic/src \
-    && f2c -A -ec -w66 -W4 '-!bs' \
-        /opt/classic/orig/src/*.f \
-        -d /opt/classic/src
-
-RUN sed -i 's/o__1.orl = /o__1.orl = 4 * /' /opt/classic/src/helper.c
-RUN sed -i 's/int s_copy/void s_copy/' /opt/classic/src/helper.c
-
-# Generate the C files that will populate the virtual filesystem with the help and demo files
-
-FROM base AS fs-builder
-
-COPY --from=classic-converter /opt/classic/orig /opt/classic/orig
-COPY ./src/populate_fs.c /src/fs/populate_fs.c
-
-RUN mkdir -p /opt/fs/src
-
-RUN echo 'static const char * name = "mathelp.idx";' > /opt/fs/src/populate_fs_mathelp_idx.c \
-    && echo 'static const char data[] = {' >> /opt/fs/src/populate_fs_mathelp_idx.c \
-    && cat /opt/classic/orig/mathelp.idx | od -An -vt x1 | sed -E 's/ (..)/ 0x\1,/g' >> /opt/fs/src/populate_fs_mathelp_idx.c \
-    && echo '};' >> /opt/fs/src/populate_fs_mathelp_idx.c \
-    && cat /src/fs/populate_fs.c >> /opt/fs/src/populate_fs_mathelp_idx.c
-
-RUN echo 'static const char * name = "mathelp.dac";' > /opt/fs/src/populate_fs_mathelp_dac.c \
-    && echo 'static const char data[] = {' >> /opt/fs/src/populate_fs_mathelp_dac.c \
-    && cat /opt/classic/orig/mathelp.dac | od -An -vt x1 | sed -E 's/ (..)/ 0x\1,/g' >> /opt/fs/src/populate_fs_mathelp_dac.c \
-    && echo '};' >> /opt/fs/src/populate_fs_mathelp_dac.c \
-    && cat /src/fs/populate_fs.c >> /opt/fs/src/populate_fs_mathelp_dac.c
-
-RUN echo 'static const char * name = "demo";' > /opt/fs/src/populate_fs_demo.c \
-    && echo 'static const char data[] = {' >> /opt/fs/src/populate_fs_demo.c \
-    && sed -E 's/\r$$//g' /opt/classic/orig/demo | od -An -vt x1 | sed -E 's/ (..)/ 0x\1,/g' >> /opt/fs/src/populate_fs_demo.c \
-    && echo '};' >> /opt/fs/src/populate_fs_demo.c \
-    && cat /src/fs/populate_fs.c >> /opt/fs/src/populate_fs_demo.c
-
-# Build Classic from the converted sources
-
-FROM base AS classic-builder
-
 COPY --from=libf2c-builder /opt/f2c/build/libf2c/libf2c.a /opt/f2c/lib/libf2c.a
 COPY --from=libf2c-builder /opt/f2c/build/libf2c/f2c.h /opt/f2c/include/f2c.h
-COPY --from=classic-converter /opt/classic/src /opt/classic/src
-COPY --from=fs-builder /opt/fs/src /opt/fs/src
+COPY ./src/populate_fs.sh /usr/local/bin/populate_fs
 
-RUN mkdir -p /opt/classic/build
+# Convert MATLAB '84 Fortran sources to C (from local Classic folder)
+FROM development AS matlab84-converter
 
+COPY ./matlab84 /matlab
+
+RUN f2c -A -ec -w66 -W4 '-!bs' \
+        /matlab/src/*.f \
+        -d /src
+
+RUN sed -i 's/o__1.orl = /o__1.orl = 4 * /' /src/helper.c
+RUN sed -i 's/int s_copy/void s_copy/' /src/helper.c
+
+RUN populate_fs /matlab/mathelp.idx > /src/populate_fs_mathelp.idx.c
+RUN populate_fs /matlab/mathelp.dac > /src/populate_fs_mathelp.dac.c
+RUN populate_fs /matlab/demo > /src/populate_fs_demo.c
+
+# Convert MATLAB '82 Fortran sources to C (from GitHub johnsonjh/matlab)
+FROM development AS matlab82-converter
+
+COPY ./matlab82 /matlab
+COPY ./matlab82-patch.diff /matlab/
+
+RUN find /matlab/SRC -type f -name "*.FOR" -exec sh -c 'mv "$0" "${0%.FOR}.f"' {} \;
+RUN rm /matlab/SRC/S.f
+RUN sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/ERROR.f \
+    && sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/SYS.f
+RUN cd /matlab && git apply /matlab/matlab82-patch.diff
+
+RUN f2c -A -ec -w66 -W4 '-!bs' \
+        /matlab/SRC/*.f \
+        -d /src
+
+RUN mv /matlab/BIN/MATLAB.HLP /matlab/BIN/matlab.hlp
+RUN populate_fs /matlab/BIN/matlab.hlp > /src/populate_fs_matlab.hlp.c
+
+# Build MATLAB from the converted sources
+
+FROM development AS matlab-builder
+
+#COPY --from=matlab84-converter /src /src
+COPY --from=matlab82-converter /src /src
+
+RUN mkdir /build
 RUN emcc -I/opt/f2c/include -L/opt/f2c/lib \
-        /opt/classic/src/*.c \
-        /opt/fs/src/*.c \
+        /src/*.c \
         -lf2c \
-        -flto \
-        -Oz \
+        -Oz -flto \
         -sWASMFS \
-        -o /opt/classic/build/classic.wasm
-
-# Build readline
-
-FROM base AS readline-builder
-
-COPY ./readline /opt/readline
-
-RUN emcc /opt/readline/*.c \
-        -flto \
-        -Oz \
-        -sWASMFS \
-        -o /opt/readline/build/readline.wasm
+        -o /build/classic.wasm
 
 # Build the frontend with Vite
 FROM node:22-slim AS vite-builder
@@ -108,7 +91,9 @@ WORKDIR /app
 
 COPY package.json index.html vite.config.js /app/
 COPY src /app/src
-COPY --from=classic-builder /opt/classic/build/classic.wasm /app/src/classic.wasm
+
+# Choose MATLAB version (comment out one):
+COPY --from=matlab-builder /build/classic.wasm /app/src/classic.wasm
 
 RUN npm install
 RUN npx vite build
