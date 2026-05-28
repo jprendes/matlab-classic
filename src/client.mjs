@@ -1,5 +1,5 @@
 import { Terminal } from "xterm";
-import { openpty } from "xterm-pty";
+import { Readline } from "xterm-readline";
 import { WebglAddon } from "xterm-addon-webgl";
 import "xterm/css/xterm.css";
 
@@ -15,12 +15,14 @@ class Client extends IoClient {
     static fromElement(element) {
         const term = new Terminal({
             disableStdin: true,
+            cursorBlink: false,
             allowProposedApi: true,
         });
-        term.open(element);
 
-        const { master, slave } = openpty();
-        term.loadAddon(master);
+        const rl = new Readline();
+        term.loadAddon(rl);
+
+        term.open(element);
 
         const addon = new WebglAddon();
         addon.onContextLoss(e => addon.dispose());
@@ -28,16 +30,51 @@ class Client extends IoClient {
 
         const client = new Client();
 
-        slave.onReadable(() => client.stdin(slave.read()));
+        let shiftEnter = false;
 
-        client.addEventListener("stdout", (evt) => slave.write(evt.detail.data));
-        client.addEventListener("stderr", (evt) => slave.write(evt.detail.data));
+        term.attachCustomKeyEventHandler((ev) => {
+            if (ev.type === 'keydown' && ev.key === 'Enter' && ev.shiftKey) {
+                shiftEnter = true;
+            }
+            if (ev.type === 'keydown' && ev.ctrlKey && ev.key === 'd' && rl.getLine() === '') {
+                client.stdin("");
+            }
+            if (ev.type === 'keydown' && ev.ctrlKey && ev.key === 'c') {
+                client.stdin("\n");
+            }
+            return true;
+        });
+
+        rl.setCheckHandler(() => {
+            if (shiftEnter) {
+                shiftEnter = false;
+                return false;
+            }
+            return true;
+        });
+
+        let running = false;
+
+        async function readLoop() {
+            running = true;
+            while (running) {
+                const line = await rl.read("");
+                if (running) client.stdin(line + "\n");
+            }
+        }
+
+        client.addEventListener("stdout", (evt) => rl.write(evt.detail.data));
+        client.addEventListener("stderr", (evt) => rl.write(evt.detail.data));
         client.addEventListener("ready", () => {
             term.options.disableStdin = false;
+            term.options.cursorBlink = true;
             term.element.style.opacity = 1;
+            readLoop();
         });
         client.addEventListener("exit", () => {
+            running = false;
             term.options.disableStdin = true;
+            term.options.cursorBlink = false;
             term.element.style.opacity = 0.5;
         });
 
