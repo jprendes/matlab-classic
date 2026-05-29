@@ -1,0 +1,58 @@
+diff --git a/BIN/MATLAB.HLP b/BIN/MATLAB.HLP
+index 99ea597..2fbbb20 100644
+--- a/BIN/MATLAB.HLP
++++ b/BIN/MATLAB.HLP
+@@ -2,34 +2,34 @@ Appendix.  The HELP document
+ 
+ NEWS  MATLAB NEWS dated 3/21/82.
+ 
+-Normalization of some eigenvectors associated with multiple
+-eigenvalues altered to reduce overflow.
++ Normalization of some eigenvectors associated with multiple
++ eigenvalues altered to reduce overflow.
+ 
+-The new features added since the November,  1980,  printing
+-of the Users' Guide include DIARY, EDIT, KRON, MACRO, PLOT,
+-RAT, TRIL, TRIU and six element-by-element operations:  .*   ./   .\   .*.
+-./.   .\.
++ The new features added since the November,  1980,  printing
++ of the Users' Guide include DIARY, EDIT, KRON, MACRO, PLOT,
++ RAT, TRIL, TRIU and six element-by-element operations:  .*   ./   .\   .*.
++ ./.   .\.
+ 
+-Some additional  capabilities  have  been  added  to  EXIT,
+-RANDOM, RCOND, SIZE and SVD.
++ Some additional  capabilities  have  been  added  to  EXIT,
++ RANDOM, RCOND, SIZE and SVD.
+ 
+ INTRO Welcome to MATLAB.
+ 
+-Here are a few sample statements:
++ Here are a few sample statements:
+ 
+-A = <1 2; 3 4>
+-b = <5 6>'
+-x = A\b
+-<V,D> = eig(A),  norm(A-V*D/V)
+-help \ , help eig
+-exec('demo',7)
++ A = <1 2; 3 4>
++ b = <5 6>'
++ x = A\b
++ <V,D> = eig(A),  norm(A-V*D/V)
++ help \ , help eig
++ exec('demo',7)
+ 
+-For more information, see the MATLAB Users' Guide which  is
+-contained in file ...  or may be obtained from ... .
++ For more information, see the MATLAB Users' Guide which  is
++ contained in file ...  or may be obtained from ... .
+ 
+ HELP  HELP gives assistance.
+-HELP  HELP obviously prints this message.
+-To see all the HELP messages, list the file ... .
++ HELP  HELP obviously prints this message.
++ To see all the HELP messages, list the file ... .
+ 
+ <     < > Brackets used in forming vectors and matrices.
+  <6.9  9.64  SQRT(-1)>  is  a  vector  with  three  elements

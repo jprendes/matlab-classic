@@ -12,7 +12,7 @@ index 50c14d8..5dd0a41 100644
        RETURN
  C
 diff --git a/SRC/MATLAB.f b/SRC/MATLAB.f
-index f835d41..7855cf9 100644
+index f835d41..54e6c4b 100644
 --- a/SRC/MATLAB.f
 +++ b/SRC/MATLAB.f
 @@ -56,13 +56,11 @@ C
@@ -31,8 +31,17 @@ index f835d41..7855cf9 100644
        WIO = 0
  C
        IF (INIT .GE. 0) WRITE(WTE,100)
+@@ -80,7 +78,7 @@ C     INITIAL LINE LIMIT
+       LCT(2) = 25
+ C
+       ALFL = 52
+-      CASE = 0
++      CASE = 1
+ C     CASE = 1 for file names in lower case
+       DO 20 I = 1, ALFL
+          ALFA(I) = ICHAR(ALPHA(I))
 diff --git a/SRC/SYS.f b/SRC/SYS.f
-index 4999a33..a85effb 100644
+index fa31d02..6f8ad3e 100644
 --- a/SRC/SYS.f
 +++ b/SRC/SYS.f
 @@ -175,7 +175,7 @@ C
@@ -40,7 +49,7 @@ index 4999a33..a85effb 100644
        WRITE(WTE,10)
        IF (WIO .NE. 0) WRITE(WIO,10)
 -   10 FORMAT(/1X,'<>',$)
-+   10 FORMAT(/1X,'<>')
++   10 FORMAT(/'<>')
        IF (PAUSE .EQ. 1) READ(RTE,20) DUMMY
     20 FORMAT(A1)
        RETURN

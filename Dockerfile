@@ -58,19 +58,23 @@ RUN populate_fs /matlab/demo > /src/populate_fs_demo.c
 FROM development AS matlab82-converter
 
 COPY ./matlab82 /matlab
-COPY ./matlab82-patch.diff /matlab/
+COPY ./patches /patches
+COPY ./demo /matlab/
 
 RUN find /matlab/SRC -type f -name "*.FOR" -exec sh -c 'mv "$0" "${0%.FOR}.f"' {} \;
 RUN rm /matlab/SRC/S.f
 RUN sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/ERROR.f /matlab/SRC/SYS.f
-RUN cd /matlab && git apply /matlab/matlab82-patch.diff
-
+RUN cd /matlab && git apply /patches/matlab82-patch-io.patch
+RUN cd /matlab && git apply /patches/matlab82-patch-more-elements.patch
+RUN cd /matlab && git apply /patches/matlab82-patch-fix-help.patch
+RUN cd /matlab && git apply /patches/matlab82-patch-fix-print.patch
 RUN f2c $F2CFLAGS \
         /matlab/SRC/*.f \
         -d /src
 
 RUN mv /matlab/BIN/MATLAB.HLP /matlab/BIN/matlab.hlp
 RUN populate_fs /matlab/BIN/matlab.hlp > /src/populate_fs_matlab.hlp.c
+RUN populate_fs /matlab/demo > /src/populate_fs_demo.c
 
 # Build MATLAB from the converted sources
 
@@ -89,7 +93,7 @@ RUN emcc -I/opt/f2c/include -L/opt/f2c/lib \
         -o /build/classic.wasm
 
 # Build the frontend with Vite
-FROM node:22-slim AS vite-builder
+FROM node:22-alpine AS vite-builder
 
 WORKDIR /app
 
