@@ -17,6 +17,8 @@ class Client extends IoClient {
             disableStdin: true,
             cursorBlink: false,
             allowProposedApi: true,
+            cols: 80,
+            rows: 24,
         });
 
         const rl = new Readline();
@@ -39,40 +41,49 @@ class Client extends IoClient {
             if (ev.type === 'keydown' && ev.ctrlKey && ev.key === 'd' && rl.getLine() === '') {
                 client.stdin("");
             }
-            if (ev.type === 'keydown' && ev.ctrlKey && ev.key === 'c') {
-                client.stdin("\n");
-            }
             return true;
         });
-
         rl.setCheckHandler(() => {
             if (shiftEnter) {
                 shiftEnter = false;
                 return false;
             }
+            if (rl.getLine().split("\n").pop().includes("...")) {
+                return false;
+            }
             return true;
         });
 
-        let running = false;
-
-        async function readLoop() {
-            running = true;
-            while (running) {
-                const line = await rl.read("");
-                if (running) client.stdin(line + "\n");
+        let line = "";
+        client.addEventListener("stdout", (evt) => {
+            // do not print the prompt "<>" emitted by the patched MATLAB
+            // when it needs more input, xterm-readline already prints its
+            // own prompt in that case
+            const data = evt.detail.data;
+            line += data;
+            line = line.match(/[^\n]*\n?$/)[0];
+            if (line === "<>\n") {
+                return;
             }
-        }
-
-        client.addEventListener("stdout", (evt) => rl.write(evt.detail.data));
+            rl.write(data);
+        });
         client.addEventListener("stderr", (evt) => rl.write(evt.detail.data));
+        client.addEventListener("stdin", async () => {
+            let input = "";
+            if (line == "<>\n") {
+                term.write("\x1b[A");
+                input = await rl.read("\n<>");
+            } else {
+                input = await rl.read("");
+            }
+            client.stdin(input + "\n");
+        });
         client.addEventListener("ready", () => {
             term.options.disableStdin = false;
             term.options.cursorBlink = true;
             term.element.style.opacity = 1;
-            readLoop();
         });
         client.addEventListener("exit", () => {
-            running = false;
             term.options.disableStdin = true;
             term.options.cursorBlink = false;
             term.element.style.opacity = 0.5;

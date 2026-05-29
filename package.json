@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "coi-serviceworker": "^0.1.7",
     "xterm": "5.0.0",
     "xterm-addon-webgl": "0.13.0",
     "xterm-readline": "^1.1.1"

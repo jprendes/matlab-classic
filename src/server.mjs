@@ -3,14 +3,15 @@ import { normalize, resolve, join } from "path";
 import { stat } from "fs/promises";
 import { createReadStream } from "fs";
 
-const PORT = parseInt(process.env.PORT || "8080");
-const ROOT = normalize(resolve(process.env.ROOT || process.cwd()));
+const ROOT = normalize(resolve(process.argv[2] || process.env.ROOT || process.cwd()));
+const PORT = parseInt(process.argv[3] || process.env.PORT || "8080");
 const INDEX = process.env.INDEX || "index.html";
 
 function mime(path) {
     const types = {
         "js": "application/javascript",
         "mjs": "application/javascript",
+        "css": "text/css",
         "html": "text/html",
         "wasm": "application/wasm",
         "map": "application/json",
@@ -74,4 +75,4 @@ createServer(async (req, res) => {
     createReadStream(path).pipe(res);
 }).listen(PORT);
 
-console.log(`Listening on http://localhost:${PORT}`);
+console.log(`Serving ${ROOT} on http://localhost:${PORT}`);

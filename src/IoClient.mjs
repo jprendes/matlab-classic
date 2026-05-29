@@ -1,32 +1,15 @@
-const concat = (a, b) => {
-    const c = new Uint8Array(a.byteLength + b.byteLength);
-    c.set(a);
-    c.set(b, a.byteLength);
-    return c;
-}
-
-class Deferred {
-    constructor() {
-        const promise = new Promise((resolve, reject) =>  {
-            this.resolve = resolve;
-            this.reject = reject;
-        });
-        this.then = promise.then.bind(promise);
-    }
-};
-
 class IoClient extends EventTarget {
-    #deferred = new Deferred();
+    #deferred = Promise.withResolvers();
     #encoder = new TextEncoder();
-    #decoderout = new TextDecoder("utf-8");
-    #decodererr = new TextDecoder("utf-8");
-    #buffer = new Uint8Array(0);
+    #chunks = [];
+    #totalBytes = 0;
 
     stdin = (data) => {
         if (typeof data === "string") {
             data = this.#encoder.encode(data);
         }
-        this.#buffer = concat(this.#buffer, new Uint8Array(data));
+        this.#chunks.push(new Uint8Array(data));
+        this.#totalBytes += data.byteLength;
         this.#deferred.resolve();
     }
 
@@ -45,14 +28,30 @@ class IoClient extends EventTarget {
     }
 
     #stdin = async (sab) => {
-        await this.#deferred;
+        if (this.#totalBytes === 0) {
+            this.dispatchEvent(new CustomEvent("stdin"));
+        }
+        await this.#deferred.promise;
         const ctrl = new Int32Array(sab, 0, 1)
         const data = new Uint8Array(sab, ctrl.byteOffset + ctrl.byteLength);
-        const size = Math.min(this.#buffer.byteLength, data.byteLength);
-        data.set(this.#buffer.subarray(0, data.byteLength));
-        this.#buffer = this.#buffer.subarray(data.byteLength);
-        if (this.#buffer.byteLength === 0) {
-            this.#deferred = new Deferred();
+        const size = Math.min(this.#totalBytes, data.byteLength);
+        let offset = 0;
+        while (offset < size && this.#chunks.length > 0) {
+            const chunk = this.#chunks[0];
+            const needed = size - offset;
+            if (chunk.byteLength <= needed) {
+                data.set(chunk, offset);
+                offset += chunk.byteLength;
+                this.#chunks.shift();
+            } else {
+                data.set(chunk.subarray(0, needed), offset);
+                this.#chunks[0] = chunk.subarray(needed);
+                offset += needed;
+            }
+        }
+        this.#totalBytes -= size;
+        if (this.#totalBytes === 0) {
+            this.#deferred = Promise.withResolvers();
         }
         Atomics.store(ctrl, 0, size);
         Atomics.notify(ctrl, 0);

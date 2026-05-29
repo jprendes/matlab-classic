@@ -13,6 +13,10 @@ The generated files are located in `./build/`.
 The generated files need to be served with an http server.
 To do this, run from a terminal
 ```
-npx http-server ./build -p 8080
+docker run --rm -it \
+    -v $PWD:/app \
+    -p 8080:8080 \
+    node:22-alpine \
+    node /app/src/server.mjs /app/build
 ```
 Then on a browser open `http://localhost:8080`.

@@ -178,7 +178,14 @@ export default class MATLAB {
     return fetch(url).then(r => r.arrayBuffer());
   }
 
+  #readyPromise;
+
   async ready() {
+    this.#readyPromise ??= this.#init();
+    return this.#readyPromise;
+  }
+
+  async #init() {
     const binary = this.wasmBinary ?? await this.#loadBinary(this.#wasmUrl);
 
     const { instance } = await WebAssembly.instantiate(binary, {
@@ -189,8 +196,6 @@ export default class MATLAB {
 
     this.#memory = this.#instance.exports.memory;
     this.#updateViews();
-
-    this.ready = async () => {};
   }
 
   async run() {
