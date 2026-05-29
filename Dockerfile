@@ -2,6 +2,10 @@
 
 FROM emscripten/emsdk:5.0.7 AS base
 
+ENV CFLAGS="-Oz -flto"
+#ENV CFLAGS="-O0 -g"
+ENV F2CFLAGS="-A -ec -w66 -W4 -!bs"
+
 # Download and build the f2c binary
 FROM base AS f2c-builder
 
@@ -24,7 +28,7 @@ RUN sed -i -E 's/^(CC|CFLAGS) =/\1 ?=/' /opt/f2c/build/libf2c/makefile.u \
     && echo '#define IEEE_8087' > /opt/f2c/build/libf2c/arith.h
 
 RUN emmake make -C /opt/f2c/build/libf2c -f makefile.u \
-        CFLAGS="-Wno-parentheses -Wno-shift-op-parentheses -Wno-format-security -Oz -flto" \
+        CFLAGS="-Wno-parentheses -Wno-shift-op-parentheses -Wno-format-security $CFLAGS" \
         all
 
 FROM base AS development
@@ -39,7 +43,7 @@ FROM development AS matlab84-converter
 
 COPY ./matlab84 /matlab
 
-RUN f2c -A -ec -w66 -W4 '-!bs' \
+RUN f2c $F2CFLAGS \
         /matlab/src/*.f \
         -d /src
 
@@ -58,11 +62,10 @@ COPY ./matlab82-patch.diff /matlab/
 
 RUN find /matlab/SRC -type f -name "*.FOR" -exec sh -c 'mv "$0" "${0%.FOR}.f"' {} \;
 RUN rm /matlab/SRC/S.f
-RUN sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/ERROR.f \
-    && sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/SYS.f
+RUN sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/ERROR.f /matlab/SRC/SYS.f
 RUN cd /matlab && git apply /matlab/matlab82-patch.diff
 
-RUN f2c -A -ec -w66 -W4 '-!bs' \
+RUN f2c $F2CFLAGS \
         /matlab/SRC/*.f \
         -d /src
 
@@ -73,6 +76,7 @@ RUN populate_fs /matlab/BIN/matlab.hlp > /src/populate_fs_matlab.hlp.c
 
 FROM development AS matlab-builder
 
+# Choose MATLAB version (comment out one):
 #COPY --from=matlab84-converter /src /src
 COPY --from=matlab82-converter /src /src
 
@@ -80,7 +84,7 @@ RUN mkdir /build
 RUN emcc -I/opt/f2c/include -L/opt/f2c/lib \
         /src/*.c \
         -lf2c \
-        -Oz -flto \
+        $CFLAGS \
         -sWASMFS \
         -o /build/classic.wasm
 
@@ -91,8 +95,6 @@ WORKDIR /app
 
 COPY package.json index.html vite.config.js /app/
 COPY src /app/src
-
-# Choose MATLAB version (comment out one):
 COPY --from=matlab-builder /build/classic.wasm /app/src/classic.wasm
 
 RUN npm install

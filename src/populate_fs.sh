@@ -3,7 +3,7 @@ FILE=$1
 NAME=$(basename $FILE)
 echo 'static const char * name = "'$NAME'";'
 echo 'static const char data[] = {'
-cat $FILE | od -An -vt x1 | sed -E 's/ (..)/ 0x\1,/g'
+cat $FILE | sed -E 's/\r$$//g' | od -An -vt x1 | sed -E 's/ (..)/ 0x\1,/g'
 echo '};'
 
 cat <<EOF
