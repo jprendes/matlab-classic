@@ -63,11 +63,11 @@ COPY ./demo /matlab/
 
 RUN find /matlab/SRC -type f -name "*.FOR" -exec sh -c 'mv "$0" "${0%.FOR}.f"' {} \;
 RUN rm /matlab/SRC/S.f
-RUN sed -i -E 's/\x0d\x1a$/\n/' /matlab/SRC/ERROR.f /matlab/SRC/SYS.f
-RUN cd /matlab && git apply /patches/matlab82-patch-io.patch
-RUN cd /matlab && git apply /patches/matlab82-patch-more-elements.patch
-RUN cd /matlab && git apply /patches/matlab82-patch-fix-help.patch
-RUN cd /matlab && git apply /patches/matlab82-patch-fix-print.patch
+RUN find /matlab -type f \( -name "*.f" -o -name "*.HLP" \) -exec sed -i -e 's/\r$//' -e 's/\x1a$/\n/' {} \;
+RUN cd /matlab && patch -p1 < /patches/matlab82-patch-io.patch
+RUN cd /matlab && patch -p1 < /patches/matlab82-patch-more-elements.patch
+RUN cd /matlab && patch -p1 < /patches/matlab82-patch-fix-help.patch
+RUN cd /matlab && patch -p1 < /patches/matlab82-patch-fix-print.patch
 RUN f2c $F2CFLAGS \
         /matlab/SRC/*.f \
         -d /src
