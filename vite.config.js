@@ -1,4 +1,6 @@
 import { defineConfig } from "vite";
+import { resolve } from "path";
+import { copyFileSync } from "fs";
 
 export default defineConfig({
   base: "./",
@@ -12,4 +14,13 @@ export default defineConfig({
     outDir: "build",
     emptyOutDir: true,
   },
+  plugins: [{
+    name: "copy-coi-serviceworker",
+    closeBundle() {
+      copyFileSync(
+        resolve("node_modules/coi-serviceworker/coi-serviceworker.js"),
+        resolve("build/coi-serviceworker.js"),
+      );
+    },
+  }],
 });
