@@ -87,6 +87,16 @@ class Client extends IoClient {
             term.options.disableStdin = true;
             term.options.cursorBlink = false;
             term.element.style.opacity = 0.5;
+
+            const btn = document.createElement("button");
+            btn.className = "restart-btn";
+            btn.textContent = "↻ Restart";
+            btn.addEventListener("click", () => {
+                btn.remove();
+                term.dispose();
+                Client.fromElement(element);
+            });
+            element.appendChild(btn);
         });
 
         client.terminal = term;
