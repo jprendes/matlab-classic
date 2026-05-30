@@ -1,5 +1,5 @@
-# MATLAB Classic (1984 Edition)
-The 1984 edition of MATLAB running in web page using WebAssembly.
+# MATLAB Classic (1982 Edition)
+The 1982 edition of MATLAB running in web page using WebAssembly.
 
 # Build
 To build the project you need a liinux host, an internet connection and docker.
