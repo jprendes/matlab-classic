@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Classic MATLAB</title>
         <style>
             body {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                min-width: max-content;
                 min-height: 100vh;
                 margin: 0;
                 padding: 8px;
@@ -18,6 +18,14 @@
                 border-radius: 8px;
                 overflow: hidden;
                 box-shadow: 0 8px 30px rgb(0 0 0 / 50%);
+                max-width: 100%;
+            }
+            body.compact {
+                padding: 0;
+            }
+            body.compact .window {
+                border-radius: 0;
+                box-shadow: none;
             }
             .titlebar {
                 display: flex;
@@ -53,29 +61,31 @@
             }
 
             /* width */
-            #terminal ::-webkit-scrollbar {
-                width: 10px;
+            #terminal .xterm-viewport::-webkit-scrollbar {
+                width: 6px;
             }
 
             /* Track */
-            #terminal ::-webkit-scrollbar-track {
+            #terminal .xterm-viewport::-webkit-scrollbar-track {
                 background: transparent;
             }
 
             /* Handle */
-            #terminal ::-webkit-scrollbar-thumb {
+            #terminal .xterm-viewport::-webkit-scrollbar-thumb {
                 background: #888;
             }
 
             /* Handle on hover */
-            #terminal ::-webkit-scrollbar-thumb:hover {
+            #terminal .xterm-viewport::-webkit-scrollbar-thumb:hover {
                 background: #BBB;
             }
 
-            #terminal {
-                position: relative;
+            #terminal .xterm-viewport {
                 scrollbar-width: thin;
                 scrollbar-color: #888 transparent;
+            }
+            #terminal {
+                position: relative;
             }
             .restart-btn {
                 position: absolute;

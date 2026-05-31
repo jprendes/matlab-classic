@@ -1,9 +1,9 @@
 import { Terminal } from "xterm";
 import { Readline } from "xterm-readline";
-import { WebglAddon } from "xterm-addon-webgl";
 import "xterm/css/xterm.css";
 
 import IoClient from "./IoClient.mjs";
+import FitFontSize from "./FitFontSize.mjs";
 
 class Client extends IoClient {
     constructor() {
@@ -26,9 +26,16 @@ class Client extends IoClient {
 
         term.open(element);
 
-        const addon = new WebglAddon();
-        addon.onContextLoss(e => addon.dispose());
-        term.loadAddon(addon);
+        const fitter = new FitFontSize(term, element, {
+            maxFontSize: 15,
+            minFontSize: 5,
+            onChange(newSize) {
+                document.body.classList.toggle('compact', newSize < 15);
+            },
+        });
+
+        term.focus();
+        window.addEventListener('focus', () => term.focus());
 
         const client = new Client();
 
@@ -93,6 +100,7 @@ class Client extends IoClient {
             btn.textContent = "↻ Restart";
             btn.addEventListener("click", () => {
                 btn.remove();
+                fitter.dispose();
                 term.dispose();
                 Client.fromElement(element);
             });
