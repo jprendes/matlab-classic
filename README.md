@@ -1,5 +1,9 @@
 # MATLAB Classic (1982 Edition)
-The 1982 edition of MATLAB running in web page using WebAssembly.
+The 1982 edition of MATLAB running in a web page using WebAssembly.
+
+**Try it live:** https://jprendes.github.io/matlab-classic/
+
+The original MATLAB 82 source code is included as a git submodule from [johnsonjh/matlab](https://github.com/johnsonjh/matlab).
 
 # Build
 To build the project you need a liinux host, an internet connection and docker.
