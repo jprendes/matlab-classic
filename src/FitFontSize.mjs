@@ -1,9 +1,10 @@
 export default class FitFontSize {
-    constructor(term, element, { maxFontSize = 15, minFontSize = 8, onChange } = {}) {
+    constructor(term, element, { maxFontSize = 15, minFontSize = 8, minRows = 24, onChange } = {}) {
         this.term = term;
         this.element = element;
         this.maxFontSize = maxFontSize;
         this.minFontSize = minFontSize;
+        this.minRows = minRows;
         this.onChange = onChange ?? null;
         this._scheduled = false;
 
@@ -55,13 +56,25 @@ export default class FitFontSize {
 
         // Compute the largest fontSize that fits the available space
         const maxFontByWidth = availableWidth / (this.term.cols * cellWidthPerFontPx);
-        const maxFontByHeight = availableHeight / (this.term.rows * cellHeightPerFontPx);
+        const maxFontByHeight = availableHeight / (this.minRows * cellHeightPerFontPx);
         const idealFontSize = Math.floor(Math.min(maxFontByWidth, maxFontByHeight));
         const newFontSize = Math.max(Math.min(idealFontSize, this.maxFontSize), this.minFontSize);
 
+        // In compact mode, fill extra vertical space with more rows
+        const cellHeight = cellHeightPerFontPx * newFontSize;
+        const newRows = Math.max(Math.floor(availableHeight / cellHeight), this.minRows);
+
+        let changed = false;
         if (newFontSize !== currentFontSize) {
             this.term.options.fontSize = newFontSize;
-            if (this.onChange) this.onChange(newFontSize, currentFontSize);
+            changed = true;
+        }
+        if (newRows !== this.term.rows) {
+            this.term.resize(this.term.cols, newRows);
+            changed = true;
+        }
+        if (changed && this.onChange) {
+            this.onChange(newFontSize, currentFontSize);
         }
     }
 
