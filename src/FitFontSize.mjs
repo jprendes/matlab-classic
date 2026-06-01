@@ -9,6 +9,7 @@ export default class FitFontSize {
         this.onRowsChange = onRowsChange ?? null;
         this.onColsChange = onColsChange ?? null;
         this._scheduled = false;
+        this._cellSizes = null; // populated on first render
 
         this._debouncedFit = () => {
             if (this._scheduled) return;
@@ -26,6 +27,7 @@ export default class FitFontSize {
                 if (screen.offsetWidth > 0 && screen.offsetHeight > 0) {
                     this._observer.disconnect();
                     this._observer = null;
+                    this._measureCellSizes(screen);
                     this.fit();
                 }
             });
@@ -33,43 +35,58 @@ export default class FitFontSize {
         }
 
         window.addEventListener('resize', this._debouncedFit);
+        window.visualViewport?.addEventListener('resize', this._debouncedFit);
+    }
+
+    _measureCellSizes(screen) {
+        const originalFontSize = this.term.options.fontSize;
+        this._cellSizes = {};
+        for (let fs = this.minFontSize; fs <= this.maxFontSize; fs++) {
+            this.term.options.fontSize = fs;
+            // Force layout to get accurate measurements
+            const cellWidth = screen.offsetWidth / this.term.cols;
+            const cellHeight = screen.offsetHeight / this.term.rows;
+            this._cellSizes[fs] = { cellWidth, cellHeight };
+        }
+        this.term.options.fontSize = originalFontSize;
+
+        // Measure fixed padding once (before compact mode changes them)
+        const bodyStyle = getComputedStyle(document.body);
+        this._padX = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight)
+            + parseFloat(getComputedStyle(this.element).paddingLeft) + parseFloat(getComputedStyle(this.element).paddingRight);
+        this._padY = parseFloat(bodyStyle.paddingTop) + parseFloat(bodyStyle.paddingBottom)
+            + parseFloat(getComputedStyle(this.element).paddingTop) + parseFloat(getComputedStyle(this.element).paddingBottom);
     }
 
     fit() {
-        const screen = this.element.querySelector('.xterm-screen');
-        if (!screen || screen.offsetWidth === 0 || screen.offsetHeight === 0) return;
+        if (!this._cellSizes) return;
 
-        const currentFontSize = this.term.options.fontSize;
-        // Cell dimensions scale linearly with fontSize
-        const cellWidthPerFontPx = (screen.offsetWidth / this.term.cols) / currentFontSize;
-        const cellHeightPerFontPx = (screen.offsetHeight / this.term.rows) / currentFontSize;
-
-        // Available space: viewport minus body padding, terminal padding, and titlebar
-        const bodyStyle = getComputedStyle(document.body);
-        const bodyPadX = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
-        const bodyPadY = parseFloat(bodyStyle.paddingTop) + parseFloat(bodyStyle.paddingBottom);
-        const termStyle = getComputedStyle(this.element);
-        const termPadX = parseFloat(termStyle.paddingLeft) + parseFloat(termStyle.paddingRight);
-        const termPadY = parseFloat(termStyle.paddingTop) + parseFloat(termStyle.paddingBottom);
         const titlebar = this.element.parentElement?.querySelector('.titlebar');
+        // Use inline style to determine logical state (avoids reading mid-transition values)
         const titlebarHeight = titlebar
-            ? titlebar.offsetHeight + parseFloat(getComputedStyle(titlebar).marginTop)
+            ? (titlebar.style.marginTop === '' ? titlebar.offsetHeight : 0)
             : 0;
 
-        const availableWidth = window.innerWidth - bodyPadX - termPadX;
-        const availableHeight = window.innerHeight - bodyPadY - termPadY - titlebarHeight;
+        const vv = window.visualViewport;
+        const viewportWidth = vv ? vv.width : window.innerWidth;
+        const viewportHeight = vv ? vv.height : window.innerHeight;
 
-        // Font size determined by width only
-        const maxFontByWidth = availableWidth / (this.term.cols * cellWidthPerFontPx);
-        const idealFontSize = Math.floor(maxFontByWidth);
-        const newFontSize = Math.max(Math.min(idealFontSize, this.maxFontSize), this.minFontSize);
+        const availableWidth = viewportWidth - this._padX;
+        const availableHeight = viewportHeight - this._padY - titlebarHeight;
 
-        // Rows determined by available height at the chosen font size
-        const cellHeight = cellHeightPerFontPx * newFontSize;
+        // Find largest font that fits within available width
+        let newFontSize = this.minFontSize;
+        for (let fs = this.maxFontSize; fs >= this.minFontSize; fs--) {
+            if (this._cellSizes[fs].cellWidth * this.term.cols <= availableWidth) {
+                newFontSize = fs;
+                break;
+            }
+        }
+
+        const { cellWidth, cellHeight } = this._cellSizes[newFontSize];
         const newRows = Math.max(Math.floor(availableHeight / cellHeight), this.minRows);
 
-        const cellWidth = cellWidthPerFontPx * newFontSize;
-
+        const currentFontSize = this.term.options.fontSize;
         if (newFontSize !== currentFontSize) {
             this.term.options.fontSize = newFontSize;
             if (this.onFontChange) this.onFontChange({ fontSize: newFontSize, oldFontSize: currentFontSize, cellWidth, cellHeight });
@@ -83,6 +100,7 @@ export default class FitFontSize {
 
     dispose() {
         window.removeEventListener('resize', this._debouncedFit);
+        window.visualViewport?.removeEventListener('resize', this._debouncedFit);
         if (this._observer) {
             this._observer.disconnect();
             this._observer = null;

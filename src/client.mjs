@@ -39,8 +39,10 @@ class Client extends IoClient {
                 const titlebarRows = Math.ceil(titlebarHeight / cellHeight);
                 if (!hidden && rows < 12) {
                     titlebar.style.marginTop = `-${titlebarHeight}px`;
+                    fitter.fit();
                 } else if (hidden && rows >= 12 + titlebarRows) {
                     titlebar.style.marginTop = '';
+                    fitter.fit();
                 }
             },
         });

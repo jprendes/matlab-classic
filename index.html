@@ -8,27 +8,29 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                min-height: 100vh;
+                min-height: 100dvh;
+                max-height: 100dvh;
                 margin: 0;
-                padding: 8px;
+                padding: 0 8px;
                 box-sizing: border-box;
                 background: #444;
+                overflow: hidden;
             }
             .window {
-                border-radius: 8px;
+                background: black;
+                border-radius: 0;
                 overflow: hidden;
                 box-shadow: 0 8px 30px rgb(0 0 0 / 50%);
                 max-width: 100%;
+                min-height: 100dvh;
             }
             body.compact {
                 padding: 0;
                 background: black;
             }
             body.compact .window {
-                border-radius: 0;
                 box-shadow: none;
                 min-width: 100vw;
-                min-height: 100vh;
             }
             .titlebar {
                 display: flex;
