@@ -1,11 +1,13 @@
-import { createServer, STATUS_CODES } from "http";
+import { createServer as createHttpServer, STATUS_CODES } from "http";
+import { createServer as createHttpsServer } from "https";
 import { normalize, resolve, join } from "path";
 import { stat } from "fs/promises";
 import { createReadStream } from "fs";
+import parseArgs from "./server/args.mjs";
+import generateSelfSignedCert from "./server/cert.mjs";
 
-const ROOT = normalize(resolve(process.argv[2] || process.env.ROOT || process.cwd()));
-const PORT = parseInt(process.argv[3] || process.env.PORT || "8080");
-const INDEX = process.env.INDEX || "index.html";
+const { port: PORT, index: INDEX, https: HTTPS, root } = parseArgs(process.argv);
+const ROOT = normalize(resolve(root));
 
 function mime(path) {
     const types = {
@@ -52,7 +54,7 @@ process.on('SIGINT', function() {
     process.exit(0);
 });
 
-createServer(async (req, res) => {
+const handler = async (req, res) => {
     const { url } = req;
     let path = normalize(join(ROOT, url));
 
@@ -73,6 +75,21 @@ createServer(async (req, res) => {
 
     res.writeHead(200, headers);
     createReadStream(path).pipe(res);
-}).listen(PORT);
+};
 
-console.log(`Serving ${ROOT} on http://localhost:${PORT}`);
+function start() {
+    let server;
+    let protocol;
+    if (HTTPS) {
+        const { key, cert } = generateSelfSignedCert();
+        server = createHttpsServer({ key, cert }, handler);
+        protocol = "https";
+    } else {
+        server = createHttpServer(handler);
+        protocol = "http";
+    }
+    server.listen(PORT);
+    console.log(`Serving ${ROOT} on ${protocol}://localhost:${PORT}`);
+}
+
+start();

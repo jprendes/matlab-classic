@@ -97,11 +97,13 @@ FROM node:22-alpine AS vite-builder
 
 WORKDIR /app
 
-COPY package.json index.html vite.config.js /app/
+COPY package.json /app/
+RUN npm install
+
+COPY index.html vite.config.js /app/
 COPY src /app/src
 COPY --from=matlab-builder /build/classic.wasm /app/src/classic.wasm
 
-RUN npm install
 RUN npx vite build
 
 # Build the final image
