@@ -68,6 +68,7 @@ RUN cd /matlab && patch -p1 < /patches/matlab82-patch-io.patch
 RUN cd /matlab && patch -p1 < /patches/matlab82-patch-more-elements.patch
 RUN cd /matlab && patch -p1 < /patches/matlab82-patch-fix-help.patch
 RUN cd /matlab && patch -p1 < /patches/matlab82-patch-fix-print.patch
+RUN cd /matlab && patch -p1 < /patches/matlab82-patch-fix-exec-pause.patch
 RUN f2c $F2CFLAGS \
         /matlab/SRC/*.f \
         -d /src

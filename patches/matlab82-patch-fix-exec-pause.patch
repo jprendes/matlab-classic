@@ -1,0 +1,22 @@
+diff --git a/SRC/PARSE.f b/SRC/PARSE.f
+index f14d248..73b3948 100644
+--- a/SRC/PARSE.f
++++ b/SRC/PARSE.f
+@@ -29,8 +29,15 @@ C
+       LCT(3) = 0
+       LCT(4) = 2
+       LPT(1) = 1
+-   10 IF (SYM.EQ.EOL .AND. MOD(LCT(4)/2,2).EQ.1) CALL PROMPT(LCT(4)/4)
+-      IF (SYM .EQ. EOL) CALL GETLIN
++   10 IF (SYM.EQ.EOL .AND. MOD(LCT(4)/2,2).EQ.1) THEN
++          IF (RIO.NE.RTE) THEN
++              READ(RIO,101,END=11) BUF(1)
++              BACKSPACE(RIO)
++          END IF
++          CALL PROMPT(LCT(4)/4)
++      END IF
++   11 IF (SYM .EQ. EOL) CALL GETLIN
++  101 FORMAT(A1)
+       ERR = 0
+       PT = PTZ
+    15 EXCNT = 0
