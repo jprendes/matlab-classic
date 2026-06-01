@@ -35,12 +35,12 @@ class Client extends IoClient {
                 document.body.classList.toggle('compact', fontSize < 15);
             },
             onRowsChange({ rows, cellHeight }) {
-                const hidden = titlebar.style.display === 'none';
+                const hidden = titlebar.style.marginTop !== '';
                 const titlebarRows = Math.ceil(titlebarHeight / cellHeight);
                 if (!hidden && rows < 12) {
-                    titlebar.style.display = 'none';
+                    titlebar.style.marginTop = `-${titlebarHeight}px`;
                 } else if (hidden && rows >= 12 + titlebarRows) {
-                    titlebar.style.display = '';
+                    titlebar.style.marginTop = '';
                 }
             },
         });

@@ -51,7 +51,10 @@ export default class FitFontSize {
         const termStyle = getComputedStyle(this.element);
         const termPadX = parseFloat(termStyle.paddingLeft) + parseFloat(termStyle.paddingRight);
         const termPadY = parseFloat(termStyle.paddingTop) + parseFloat(termStyle.paddingBottom);
-        const titlebarHeight = this.element.parentElement?.querySelector('.titlebar')?.offsetHeight ?? 0;
+        const titlebar = this.element.parentElement?.querySelector('.titlebar');
+        const titlebarHeight = titlebar
+            ? titlebar.offsetHeight + parseFloat(getComputedStyle(titlebar).marginTop)
+            : 0;
 
         const availableWidth = window.innerWidth - bodyPadX - termPadX;
         const availableHeight = window.innerHeight - bodyPadY - termPadY - titlebarHeight;
