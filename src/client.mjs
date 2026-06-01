@@ -26,11 +26,22 @@ class Client extends IoClient {
 
         term.open(element);
 
+        const titlebar = document.querySelector('.titlebar');
+        const titlebarHeight = 36; // px, from CSS
         const fitter = new FitFontSize(term, element, {
             maxFontSize: 15,
             minFontSize: 5,
-            onChange(newSize) {
-                document.body.classList.toggle('compact', newSize < 15);
+            onFontChange({ fontSize }) {
+                document.body.classList.toggle('compact', fontSize < 15);
+            },
+            onRowsChange({ rows, cellHeight }) {
+                const hidden = titlebar.style.display === 'none';
+                const titlebarRows = Math.ceil(titlebarHeight / cellHeight);
+                if (!hidden && rows < 12) {
+                    titlebar.style.display = 'none';
+                } else if (hidden && rows >= 12 + titlebarRows) {
+                    titlebar.style.display = '';
+                }
             },
         });
 
