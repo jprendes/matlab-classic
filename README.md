@@ -19,8 +19,8 @@ To do this, run from a terminal
 ```
 docker run --rm -it \
     -v $PWD:/app \
-    -p 8080:8080 \
+    -p 8443:8443 \
     node:22-alpine \
-    node /app/src/server.mjs /app/build
+    node /app/src/server.mjs /app/build --https
 ```
-Then on a browser open `http://localhost:8080`.
+Then on a browser open `https://localhost:8443`.
