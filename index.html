@@ -94,22 +94,37 @@
                 position: relative;
             }
             .restart-btn {
+                display: none;
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                padding: 8px 20px;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                font-size: 14px;
+                align-items: center;
+                justify-content: center;
+                width: 48px;
+                height: 48px;
+                padding: 0;
                 color: #fff;
-                background: #555;
-                border: 1px solid #888;
-                border-radius: 6px;
+                background: #424242;
+                border: 2px solid rgba(255, 255, 255, 0.25);
+                border-radius: 50%;
                 cursor: pointer;
                 z-index: 10;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.3);
+                transition: background 150ms ease, box-shadow 150ms ease;
             }
-            .restart-btn:hover {
-                background: #777;
+            .restart-btn:hover, .restart-btn:focus {
+                background: #616161;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                animation: spin 0.6s ease-in-out;
+            }
+            .restart-btn:active {
+                background: #333;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            }
+            @keyframes spin {
+                from { transform: translate(-50%, -50%) rotate(0deg); }
+                to { transform: translate(-50%, -50%) rotate(360deg); }
             }
         </style>
     </head>
@@ -123,7 +138,11 @@
                 </div>
                 <div class="titlebar-title">Classic MATLAB</div>
             </div>
-            <div id="terminal"></div>
+            <div id="terminal">
+                <button class="restart-btn">
+                    <svg width="32" height="32" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+                </button>
+            </div>
         </div>
         <script src="./coi-serviceworker.js"></script>
         <script type="module">
